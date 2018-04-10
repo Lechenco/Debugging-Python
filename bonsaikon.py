@@ -25,15 +25,22 @@ class Range:
     def __init__(self):
         self.min  = None  # Minimum value seen
         self.max  = None  # Maximum value seen
+        self.type = None  # Type of variable
+        self.set = set()  # Set of values taken
     
     # Invoke this for every value
     def track(self, value):
         # YOUR CODE
-        if(self.min == None or self.min > value):
+        if(self.min == None or self.min > value):   #Test minimum value
             self.min = value
 
-        if(self.max == None or self.max < value):
+        if(self.max == None or self.max < value):   #Test maximum value
             self.max = value
+
+        if self.type == None:                              #Test variable type
+            self.type = type(value)                 
+
+        self.set.add(value)                         #Adding value to the set
             
     def __repr__(self):
         return repr(self.min) + ".." + repr(self.max)
@@ -77,16 +84,19 @@ class Invariants:
         for function, events in self.vars.iteritems():
             for event, vars in events.iteritems():
                 s += event + " " + function + ":\n"
-                # continue
-                
+        
                 for var, range in vars.iteritems():
-                    s += "    assert "
+                    s += "    assert isinstance(" + var + ", type(" + repr(range.type) + "))\n"
+                    s += "    assert " + var + " in " + repr(range.set) + " \nassert"
                     if range.min == range.max:
                         s += var + " == " + repr(range.min)
                     else:
                         s += repr(range.min) + " <= " + var + " <= " + repr(range.max)
                     s += "\n"
-                
+                    # ADD HERE RELATIONS BETWEEN VARIABLES
+                    # RELATIONS SHOULD BE ONE OF: ==, <=, >=
+                    #s += "    assert " + var + " >= " + var2 + "\n"
+
         return s
 
 invariants = Invariants()
@@ -98,10 +108,10 @@ def traceit(frame, event, arg):
 sys.settrace(traceit)
 # Tester. Increase the range for more precise results when running locally
 eps = 0.000001
-for i in range(1, 10):
+for i in range(1, 3):
     r = int(random.random() * 1000) # An integer value between 0 and 999.99
     z = square_root(r, eps)
     z = square(z)
 sys.settrace(None)
-print invariants
+print (invariants)
 
